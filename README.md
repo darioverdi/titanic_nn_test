@@ -1,2 +1,7 @@
-# titanic_kaggle
-NN model for the Kaggle Titanic problem
+# Neural network model for [Kaggle Titanic](https://www.kaggle.com/c/titanic) problems
+
+A simple neural network on predicting the probability of survival in the Titanic disaster.
+
+## 18th Jan, 2016
+
+Achieve a correction of 73% on the test set.
