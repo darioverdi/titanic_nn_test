@@ -1,5 +1,6 @@
 import numpy as np
 import scipy.optimize
+from sklearn import preprocessing
 
 
 def computeNNgradients(costfunc, weights):
@@ -53,7 +54,12 @@ class NeuralNetwork:
         :return: a np array in range of -epsilon to epsilon
         """
         epsilon_init = 0.12
-        return np.random.rand(row, col) * 2 * epsilon_init - epsilon_init
+        weights = np.random.rand(row, col) * 2 * epsilon_init - epsilon_init
+        scaler = preprocessing.StandardScaler().fit(weights)
+        weights = scaler.transform(weights)
+        normalizer = preprocessing.Normalizer().fit(weights)
+        weights = normalizer.transform(weights)
+        return weights
 
     def sigmoid(self, numbers):
         """
@@ -79,8 +85,8 @@ class NeuralNetwork:
         :return:
         """
         try:
-            biased = np.array([[0]*(len(array[0])+1)]*len(array))
-            for j in range(len(self.X)):
+            biased = np.array([[0.0]*(len(array[0.0])+1)]*len(array))
+            for j in range(len(biased)):
                 biased[j] = np.insert(array[j], 0, value)
         except TypeError:
             biased = np.insert(array, 0, value)
@@ -92,7 +98,7 @@ class NeuralNetwork:
         otherwise [[0], [1]]
         :return:
         """
-        y_recoded = np.array([[0]*self.K]*self.m)
+        y_recoded = np.array([[0.0]*self.K]*self.m)
         for j in range(len(self.y)):
             y_recoded[j] = np.array(range(1, self.K+1)==self.y[j])
         return y_recoded
@@ -113,12 +119,11 @@ class NeuralNetwork:
         y_recoded = self.recode_y()
 
         # Cost function J
-        for i in range(self.m):
-            a2 = self.sigmoid(np.dot(theta1, np.transpose(X_biased[i])))
-            a2 = self.insert_bias_values(a2, 1)
-            a3 = self.sigmoid(np.dot(theta2, a2))
-            for k in range(self.K):
-                J -= y_recoded[i][k] * np.log(a3[k]) + (1-y_recoded[i][k]) * np.log(1-a3[k])
+        a2 = self.sigmoid(np.dot(X_biased, np.transpose(theta1)))
+        a2_biased = self.insert_bias_values(a2, 1)
+        a3 = self.sigmoid(np.dot(a2_biased, np.transpose(theta2)))
+        J -= np.multiply(y_recoded, np.log(a3)) + np.multiply((1-y_recoded), np.log(1-a3))
+        J = np.sum(J[:, 0:self.K])
         J /= self.m
 
         # Add regularization term to J
@@ -180,7 +185,7 @@ class NeuralNetwork:
         :param weights: parameters
         :return:
         """
-        J, grad = self.cost_function(weights)
+        J = self.cost_function(weights, onlyJ=True)
         return J
 
     def query_grad(self, weights):
@@ -247,15 +252,15 @@ class NeuralNetwork:
         return result.index(max(result)) + 1
 
 
-if __name__ == "__main__":
-    X = np.array([[1, 2, 3, 4],
-                 [5, 6, 7, 8],
-                 [9, 10, 11, 12]])
-    y = np.array([[2], [1], [2]])
-    t1 = np.array([[0.1, 0.2, 0.3, 0.4, 0.5],
-                   [0.6, 0.7, 0.8, 0.9, 0]])
-    t2 = np.array([[0.1, 0.2, 0.3],
-                   [0.4, 0.5, 0.6]])
-    w = np.append(np.array(t1.flat), np.array(t2.flat))
-    nn = NeuralNetwork(X, y, 2, 4, 3, 2, 0.3)
-    nn.train(100)
+# if __name__ == "__main__":
+#     X = np.array([[1, 2, 3, 4],
+#                  [5, 6, 7, 8],
+#                  [9, 10, 11, 12]])
+#     y = np.array([[2], [1], [2]])
+#     t1 = np.array([[0.1, 0.2, 0.3, 0.4, 0.5],
+#                    [0.6, 0.7, 0.8, 0.9, 0]])
+#     t2 = np.array([[0.1, 0.2, 0.3],
+#                    [0.4, 0.5, 0.6]])
+#     w = np.append(np.array(t1.flat), np.array(t2.flat))
+#     nn = NeuralNetwork(X, y, 2, 4, 3, 2, 0.3)
+#     print nn.cost_function(w)
